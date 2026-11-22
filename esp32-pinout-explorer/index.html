@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ESP32 Pinout Explorer — Sơ đồ chân, Datasheet 3D &amp; Thực hành cơ bản</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- TOP NAVBAR -->
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="brand-logo" aria-hidden="true">
+          <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="16" height="16" rx="3" stroke="currentColor" stroke-width="2" />
+            <rect x="10" y="10" width="8" height="8" rx="1.5" fill="currentColor" opacity="0.28" />
+            <path d="M9 2v4M14 2v4M19 2v4M9 22v4M14 22v4M19 22v4M2 9h4M2 14h4M2 19h4M22 9h4M22 14h4M22 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>ESP32 Studio &amp; Pinout</h1>
+          <p>Sơ đồ chân • Datasheet 3D • Thực hành cơ bản</p>
+        </div>
+      </div>
+
+      <!-- 3 MAIN VIEW SWITCHER -->
+      <nav class="mode-switcher" id="modeSwitcher" aria-label="Chuyển đổi phân hệ">
+        <button class="mode-btn active" data-mode="pinout" id="btnModePinout">
+          <span>📍</span><span>Sơ đồ chân Board</span>
+        </button>
+        <button class="mode-btn" data-mode="components" id="btnModeComponents">
+          <span>📦</span><span>Datasheet Linh kiện 3D</span>
+        </button>
+        <button class="mode-btn" data-mode="exercises" id="btnModeExercises">
+          <span>🎓</span><span>Bài tập &amp; Kiến thức</span>
+        </button>
+      </nav>
+
+      <div class="topbar-controls">
+        <div class="search-box" id="pinSearchContainer">
+          <svg class="search-icon" viewBox="0 0 20 20" fill="none">
+            <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.8" />
+            <path d="M13.5 13.5L17.5 17.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          <input
+            type="text"
+            id="pinSearchInput"
+            placeholder="Tìm chân: GPIO12, SDA, ADC1..."
+            autocomplete="off"
+          />
+          <button id="clearSearchBtn" class="clear-search-btn hidden" title="Xóa tìm kiếm" aria-label="Xóa tìm kiếm">×</button>
+        </div>
+
+        <label class="tooltip-toggle" id="tooltipToggleContainer" title="Bật/tắt thẻ gợi ý nổi theo con trỏ chuột">
+          <input type="checkbox" id="floatingTooltipToggle" checked />
+          <span>Tooltip</span>
+        </label>
+
+        <button id="themeToggleBtn" class="icon-btn" title="Chuyển giao diện Sáng / Tối" aria-label="Đổi giao diện">
+          <span class="theme-icon-dark">☀️</span>
+          <span class="theme-icon-light">🌙</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- =================================================================== -->
+    <!-- VIEW 1: BOARD PINOUT EXPLORER                                        -->
+    <!-- =================================================================== -->
+    <div id="viewPinout" class="main-view">
+      <!-- BOARD SELECTOR STRIP -->
+      <nav class="board-bar" aria-label="Chọn dòng board ESP32">
+        <div class="board-tabs" id="boardTabs"></div>
+      </nav>
+
+      <!-- FILTER CHIPS BAR -->
+      <section class="filter-bar" aria-label="Lọc chân theo chức năng">
+        <div class="filter-label">Lọc chức năng:</div>
+        <div class="filter-chips" id="filterChips"></div>
+        <div class="filter-stats" id="filterStats"></div>
+      </section>
+
+      <!-- MAIN WORKBENCH -->
+      <main class="workbench">
+        <!-- LEFT / CENTER: INTERACTIVE SVG BOARD -->
+        <section class="board-stage">
+          <div class="stage-toolbar">
+            <div class="stage-meta">
+              <span class="chip-pill" id="boardChipBadge">ESP-WROOM-32</span>
+              <span class="orientation-note" id="boardOrientationNote">Ăng-ten ở TRÊN • Cổng USB ở DƯỚI</span>
+            </div>
+
+            <div class="stage-actions">
+              <div class="zoom-controls" aria-label="Thu phóng sơ đồ">
+                <button id="zoomOutBtn" class="zoom-btn" title="Thu nhỏ">−</button>
+                <span id="zoomLevelText" class="zoom-level">100%</span>
+                <button id="zoomInBtn" class="zoom-btn" title="Phóng to">+</button>
+                <button id="zoomResetBtn" class="zoom-btn zoom-reset" title="Đặt lại kích thước mặc định">Vừa</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="canvas-viewport" id="canvasViewport">
+            <div class="canvas-inner" id="canvasInner">
+              <!-- SVG board rendered dynamically by app.js -->
+            </div>
+          </div>
+
+          <div class="stage-legend">
+            <div class="legend-group">
+              <span class="legend-item"><i class="dot dot-safe"></i> An toàn</span>
+              <span class="legend-item"><i class="dot dot-caution"></i> Cần lưu ý / Strapping</span>
+              <span class="legend-item"><i class="dot dot-danger"></i> Cấm dùng (Flash/PSRAM)</span>
+              <span class="legend-item"><i class="dot dot-power"></i> Nguồn / GND / RST</span>
+            </div>
+            <div class="legend-hint">
+              💡 <strong>Trỏ chuột</strong> để xem nhanh • <strong>Click vào chân</strong> để ghim &amp; copy code
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT: INSPECTOR & BOARD GUIDE PANEL -->
+        <aside class="inspector-panel">
+          <div class="inspector-tabs">
+            <button class="inspector-tab active" data-tab="pin" id="tabPinDetail">
+              Chi tiết chân
+              <span class="lock-indicator hidden" id="lockIndicator">📌 Đã ghim</span>
+            </button>
+            <button class="inspector-tab" data-tab="overview" id="tabBoardOverview">
+              Cẩm nang Board
+            </button>
+          </div>
+
+          <div class="inspector-body" id="inspectorBody">
+            <!-- Rendered dynamically by app.js -->
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- VIEW 2: VISUAL COMPONENT DATASHEETS & 3D VIEWER                      -->
+    <!-- =================================================================== -->
+    <div id="viewComponents" class="main-view hidden">
+      <div class="comp-workbench">
+        <!-- LEFT SIDEBAR: LIST OF COMPONENTS -->
+        <aside class="comp-sidebar">
+          <div class="comp-sidebar-head">
+            <h2>📦 Thư viện Linh kiện</h2>
+            <div class="comp-cat-pills" id="compCatPills"></div>
+          </div>
+          <div class="comp-list" id="compList"></div>
+        </aside>
+
+        <!-- CENTER: 3D MODEL & 2D PINOUT STAGE -->
+        <section class="comp-stage">
+          <div class="stage-toolbar">
+            <div class="comp-view-switch" id="compViewSwitch">
+              <button class="view-pill active" data-subview="3d" id="btnSubView3D">🧊 Mô hình 3D tương tác</button>
+              <button class="view-pill" data-subview="2d" id="btnSubView2D">🔌 Sơ đồ chân &amp; Đấu dây 2D</button>
+            </div>
+
+            <div class="comp-3d-controls" id="comp3dControls">
+              <div class="preset-group" id="comp3dPresets" aria-label="Chọn góc nhìn 3D">
+                <button class="preset-btn active" data-preset="iso">Góc 3D</button>
+                <button class="preset-btn" data-preset="front">Mặt trước</button>
+                <button class="preset-btn" data-preset="top">Mặt trên</button>
+                <button class="preset-btn" data-preset="side">Mặt bên</button>
+              </div>
+              <label class="mini-check" title="Tự động xoay mô hình 3D">
+                <input type="checkbox" id="toggleAutoRotate" checked />
+                <span>Tự xoay</span>
+              </label>
+              <label class="mini-check" title="Hiện nhãn chân trong không gian 3D">
+                <input type="checkbox" id="toggle3dLabels" checked />
+                <span>Nhãn 3D</span>
+              </label>
+              <div class="zoom-controls">
+                <button id="comp3dZoomOut" class="zoom-btn" title="Thu nhỏ 3D">−</button>
+                <button id="comp3dZoomIn" class="zoom-btn" title="Phóng to 3D">+</button>
+                <button id="comp3dReset" class="zoom-btn zoom-reset" title="Đặt lại góc nhìn">Đặt lại</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="comp-canvas-area">
+            <div id="comp3dWrapper" class="comp-3d-wrapper">
+              <canvas id="comp3dCanvas"></canvas>
+              <div class="comp-3d-hud" id="comp3dHud"></div>
+              <div class="comp-3d-hint">
+                🖱️ Kéo để xoay 360° • Cuộn để Zoom • Trỏ / Click vào nhãn chân 3D để xem tác dụng
+              </div>
+            </div>
+
+            <div id="comp2dWrapper" class="comp-2d-wrapper hidden"></div>
+          </div>
+
+          <!-- INTERACTIVE PIN BAR BELOW 3D STAGE -->
+          <div class="comp-pin-strip">
+            <div class="comp-pin-strip-title">Chân linh kiện (trỏ hoặc click để làm nổi bật trong 3D):</div>
+            <div class="comp-pin-chips" id="compPinChips"></div>
+          </div>
+        </section>
+
+        <!-- RIGHT: COMPONENT DATASHEET DETAILS -->
+        <aside class="comp-datasheet" id="compDatasheetPanel"></aside>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- VIEW 3: BEGINNER EXERCISES & CORE CONCEPTS                           -->
+    <!-- =================================================================== -->
+    <div id="viewExercises" class="main-view hidden">
+      <div class="ex-workbench">
+        <!-- LEFT SIDEBAR: 7 CHAPTERS (20 LABS) + 6 CORE CONCEPTS -->
+        <aside class="ex-sidebar">
+          <div class="ex-progress-box" id="exProgressBox"></div>
+          <div class="ex-sidebar-section">
+            <div class="ex-sidebar-title">🎓 Lộ trình Thực hành (7 Chương • 20 bài)</div>
+            <div class="ex-nav-list" id="exLabsList"></div>
+          </div>
+          <div class="ex-sidebar-section">
+            <div class="ex-sidebar-title">🧠 Kiến thức Nền tảng Cốt lõi (6 chuyên đề)</div>
+            <div class="ex-nav-list" id="exConceptsList"></div>
+          </div>
+        </aside>
+
+        <!-- MAIN WORKSPACE FOR EXERCISE / CONCEPT + LIVE SIMULATOR -->
+        <section class="ex-content" id="exContentArea"></section>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING SMART HOVER TOOLTIP -->
+  <div id="floatingTooltip" class="floating-tooltip hidden" role="tooltip" aria-hidden="true"></div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="toast hidden">Đã sao chép đoạn code!</div>
+
+  <script src="data/boards.js"></script>
+  <script src="data/components.js"></script>
+  <script src="data/exercises.js"></script>
+  <script src="viewer3d.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
